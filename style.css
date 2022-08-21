@@ -1,0 +1,27 @@
+* {
+    overflow: hidden;
+}
+
+body {
+    margin: 0px;
+}
+
+#view
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: calc(100vw - var(--scrollbar-width));
+    height: calc(100vh - var(--scrollbar-height));
+}
+
+img, video
+{
+    display: none;
+}
+
+p
+{
+    position: fixed;
+    font-family: sans-serif;
+}
