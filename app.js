@@ -5,6 +5,7 @@ const querystring = require('querystring');
 let files  = [];
 var i = 0;
 var scale = 1;
+var waitForLoad = false;
 var drag = false;
 var prevDragX = -1;
 var prevDragY = -1;
@@ -24,7 +25,7 @@ var vid = viewport.getElementsByTagName('video')[0]
 
 document.addEventListener('keydown', function(event) {
     if (event.which == 32 || event.which == 13) {
-        ScaleOrig()
+        ScaleToOrig()
         return
     }
 
@@ -40,7 +41,7 @@ document.addEventListener('keydown', function(event) {
 });
 
 document.addEventListener('wheel', event => {
-    Scale(-Math.sign(event.deltaY), event.x, event.y)
+    ScaleTo(-Math.sign(event.deltaY), event.x, event.y)
 });
 
 document.addEventListener('mousedown', event => {
@@ -66,6 +67,28 @@ document.addEventListener('mousemove', event => {
     prevDragX = event.x
     prevDragY = event.y
 });
+
+img.onload = () => OnContentLoad(img)
+vid.onloadedmetadata = () => OnContentLoad(vid)
+
+function OnContentLoad(el) {
+    if(!waitForLoad) return
+    waitForLoad = false
+
+    const PAD = 75
+    windowWidth = viewport.clientWidth - PAD
+    windowHeight = viewport.clientHeight - PAD
+    elWidth = (el.naturalWidth == undefined ? el.videoWidth : el.naturalWidth)
+    elHeight = (el.naturalHeight == undefined ? el.videoHeight : el.naturalHeight)
+
+    if (elWidth > windowWidth || elHeight > windowHeight) {
+        let wScale = windowWidth / elWidth
+        let hScale = windowHeight / elHeight
+
+        scale = Math.min(wScale, hScale)
+        Scale()
+    }
+}
 
 function NextImage() {
     if (files.length <= 1) {
@@ -98,13 +121,13 @@ function LoadFile() {
         return;
     }
 
-    ScaleOrig()
+    ScaleToOrig()
     let f = files[i]
 
     header.innerText = f
 
     // video
-    if (f.endsWith('.mp4') || f.endsWith('.webm')) {
+    if (f.endsWith('.mp4') || f.endsWith('.webm') || f.endsWith('.mkv') || f.endsWith('.avi')) {
         vid.src = path.resolve(f)
         vid.volume = 0
 
@@ -119,22 +142,28 @@ function LoadFile() {
         vid.pause();
         vid.currentTime = 0;
     }
+    waitForLoad = true;
 }
 
-function ScaleOrig() {
+function ScaleToOrig() {
     scale = 1
-
-    img.style.transform = "scale(1.0)";
-    vid.style.transform = "scale(1.0)";
+    Scale()
 }
 
-function Scale(delta, x, y) {
+function ScaleTo(delta, x, y) {
     scale += 0.2*delta*scale
-    if (scale < 0.01) {
-        scale = 0.01
+    Scale()
+}
+
+function Scale() {
+    const MIN = 0.01
+    const MAX = 7
+
+    if (scale < MIN) {
+        scale = MIN
     }
-    if (scale > 10) {
-        scale = 10
+    if (scale > MAX) {
+        scale = MAX
     }
 
     img.style.transform = "scale(" + scale + ")";
