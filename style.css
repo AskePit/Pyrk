@@ -6,8 +6,7 @@ body {
     margin: 0px;
 }
 
-#view
-{
+#view {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,15 +14,26 @@ body {
     height: calc(100vh - var(--scrollbar-height));
 }
 
-img, video
-{
+img, video {
     display: none;
 }
 
-p
-{
+p {
     position: fixed;
     left: 10px;
+    font-family: sans-serif;
+    font-size: 12px;
+}
+
+input {
+    position: fixed;
+    bottom: 10px;
+}
+
+label {
+    position: fixed;
+    bottom: 12px;
+    left: 20px;
     font-family: sans-serif;
     font-size: 12px;
 }

@@ -22,6 +22,7 @@ var header = document.getElementsByTagName('p')[0]
 var viewport = document.getElementById('view')
 var img = viewport.getElementsByTagName('img')[0]
 var vid = viewport.getElementsByTagName('video')[0]
+var random = document.getElementsByTagName('input')[0]
 
 document.addEventListener('keydown', function(event) {
     if (event.which == 32 || event.which == 13) {
@@ -71,23 +72,12 @@ document.addEventListener('mousemove', event => {
 img.onload = () => OnContentLoad(img)
 vid.onloadedmetadata = () => OnContentLoad(vid)
 
-function OnContentLoad(el) {
-    if(!waitForLoad) return
-    waitForLoad = false
+function RandomIntFromInterval(min, max) { // min and max included
+	return Math.floor(Math.random() * (max - min + 1) + min)
+}
 
-    const PAD = 75
-    windowWidth = viewport.clientWidth - PAD
-    windowHeight = viewport.clientHeight - PAD
-    elWidth = (el.naturalWidth == undefined ? el.videoWidth : el.naturalWidth)
-    elHeight = (el.naturalHeight == undefined ? el.videoHeight : el.naturalHeight)
-
-    if (elWidth > windowWidth || elHeight > windowHeight) {
-        let wScale = windowWidth / elWidth
-        let hScale = windowHeight / elHeight
-
-        scale = Math.min(wScale, hScale)
-        Scale()
-    }
+function RandomizeCursor() {
+    i = RandomIntFromInterval(0, files.length-1)
 }
 
 function NextImage() {
@@ -95,10 +85,14 @@ function NextImage() {
         return;
     }
 
-    if(i < files.length - 1) {
-        ++i;
+    if(random.checked) {
+        RandomizeCursor()
     } else {
-        i = 0;
+        if(i < files.length - 1) {
+            ++i;
+        } else {
+            i = 0;
+        }
     }
     LoadFile();
 }
@@ -108,10 +102,14 @@ function PrevImage() {
         return;
     }
 
-    if(i > 0) {
-        --i;
+    if(random.checked) {
+        RandomizeCursor()
     } else {
-        i = files.length - 1;
+        if(i > 0) {
+            --i;
+        } else {
+            i = files.length - 1;
+        }
     }
     LoadFile();
 }
@@ -183,30 +181,54 @@ function LoadFile() {
         return;
     }
 
-    ScaleToOrig()
     let f = files[i]
 
     header.innerText = f
 
     ext = f.split('.').pop().toLowerCase();
 
+    // NOTE: this function only hides unneded <div>
+    // desired <div> is shown only in `OnContentLoad` fucntion
+
     // video
     if (videoExtensions.includes(ext)) {
         vid.src = path.resolve(f)
         vid.volume = 0
 
-        vid.style.display = 'block';
         img.style.display = 'none';
     // picture
     } else {
         img.src = path.resolve(f)
 
-        img.style.display = 'block';
         vid.style.display = 'none';
         vid.pause();
         vid.currentTime = 0;
     }
     waitForLoad = true;
+    console.log(random.checked)
+}
+
+function OnContentLoad(el) {
+    if(!waitForLoad) return
+    waitForLoad = false
+
+    const PAD = 75
+    windowWidth = viewport.clientWidth - PAD
+    windowHeight = viewport.clientHeight - PAD
+    elWidth = (el.naturalWidth == undefined ? el.videoWidth : el.naturalWidth)
+    elHeight = (el.naturalHeight == undefined ? el.videoHeight : el.naturalHeight)
+
+    if (elWidth > windowWidth || elHeight > windowHeight) {
+        let wScale = windowWidth / elWidth
+        let hScale = windowHeight / elHeight
+
+        scale = Math.min(wScale, hScale)
+        Scale()
+    } else {
+        ScaleToOrig()
+    }
+
+    el.style.display = 'block'; // finally show element
 }
 
 function ScaleToOrig() {
@@ -262,6 +284,9 @@ function Main() {
         }
     } else if (stats.isDirectory) {
         LoadFolder(filename)
+        if(random.checked) {
+            RandomizeCursor()
+        }
     }
 
     LoadFile()
