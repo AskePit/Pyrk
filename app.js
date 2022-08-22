@@ -2,118 +2,6 @@ const path = require("path");
 const fs = require("fs");
 const querystring = require('querystring');
 
-let files  = [];
-var i = 0;
-var scale = 1;
-var waitForLoad = false;
-var drag = false;
-var prevDragX = -1;
-var prevDragY = -1;
-
-function LoadFolder(directory) {
-    fs.readdirSync(directory).forEach(file => {
-        const absolute = path.join(directory, file);
-        if (fs.statSync(absolute).isDirectory()) return LoadFolder(absolute);
-        else return files.push(absolute);
-    });
-}
-
-var header = document.getElementsByTagName('p')[0]
-var viewport = document.getElementById('view')
-var img = viewport.getElementsByTagName('img')[0]
-var vid = viewport.getElementsByTagName('video')[0]
-var random = document.getElementsByTagName('input')[0]
-
-document.addEventListener('keydown', function(event) {
-    if (event.which == 32 || event.which == 13) {
-        ScaleToOrig()
-        return
-    }
-
-    const key = event.key; // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"
-
-    const callback = {
-        "ArrowLeft"  : PrevImage,
-        "ArrowRight" : NextImage,
-        "ArrowUp"    : PrevImage,
-        "ArrowDown"  : NextImage,
-    }[key]
-    callback?.()
-});
-
-document.addEventListener('wheel', event => {
-    ScaleTo(-Math.sign(event.deltaY), event.x, event.y)
-});
-
-document.addEventListener('mousedown', event => {
-    drag = true;
-    event.preventDefault()
-});
-
-document.addEventListener('mouseup', event => {
-    drag = false;
-    prevDragX = -1;
-    prevDragY = -1;
-});
-
-document.addEventListener('mousemove', event => {
-    if (!drag) {
-        return
-    }
-
-    if (prevDragX >= 0 && prevDragY >= 0) {
-        Drag(event.x - prevDragX, event.y - prevDragY);
-    }
-
-    prevDragX = event.x
-    prevDragY = event.y
-});
-
-img.onload = () => OnContentLoad(img)
-vid.onloadedmetadata = () => OnContentLoad(vid)
-
-function RandomIntFromInterval(min, max) { // min and max included
-	return Math.floor(Math.random() * (max - min + 1) + min)
-}
-
-function RandomizeCursor() {
-    i = RandomIntFromInterval(0, files.length-1)
-}
-
-function NextImage() {
-    if (files.length <= 1) {
-        return;
-    }
-
-    if(random.checked) {
-        RandomizeCursor()
-    } else {
-        if(i < files.length - 1) {
-            ++i;
-        } else {
-            i = 0;
-        }
-    }
-    LoadFile();
-}
-
-function PrevImage() {
-    if (files.length <= 1) {
-        return;
-    }
-
-    if(random.checked) {
-        RandomizeCursor()
-    } else {
-        if(i > 0) {
-            --i;
-        } else {
-            i = files.length - 1;
-        }
-    }
-    LoadFile();
-}
-
 videoExtensions = [
     "3g2",
     "3gp",
@@ -175,6 +63,110 @@ videoExtensions = [
     "xa",
     "yuv",
 ]
+
+let files  = [];
+var i = 0;
+var scale = 1;
+var waitForLoad = false;
+var drag = false;
+var prevDragX = -1;
+var prevDragY = -1;
+
+var header = document.getElementsByTagName('p')[0]
+var viewport = document.getElementById('view')
+var img = viewport.getElementsByTagName('img')[0]
+var vid = viewport.getElementsByTagName('video')[0]
+var random = document.getElementsByTagName('input')[0]
+
+img.onload = () => OnContentLoad(img)
+vid.onloadedmetadata = () => OnContentLoad(vid)
+
+document.addEventListener('keydown', function(event) {
+    if (event.which == 32 || event.which == 13) {
+        ScaleToOrig()
+        return
+    }
+
+    const key = event.key; // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"
+
+    const callback = {
+        "ArrowLeft"  : PrevImage,
+        "ArrowRight" : NextImage,
+        "ArrowUp"    : PrevImage,
+        "ArrowDown"  : NextImage,
+    }[key]
+    callback?.()
+});
+
+document.addEventListener('wheel', event => {
+    ScaleTo(-Math.sign(event.deltaY), event.x, event.y)
+});
+
+document.addEventListener('mousedown', event => {
+    drag = true;
+    event.preventDefault()
+});
+
+document.addEventListener('mouseup', event => {
+    drag = false;
+    prevDragX = -1;
+    prevDragY = -1;
+});
+
+document.addEventListener('mousemove', event => {
+    if (!drag) {
+        return
+    }
+
+    if (prevDragX >= 0 && prevDragY >= 0) {
+        Drag(event.x - prevDragX, event.y - prevDragY);
+    }
+
+    prevDragX = event.x
+    prevDragY = event.y
+});
+
+function RandomIntFromInterval(min, max) { // min and max included
+	return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+function RandomizeCursor() {
+    i = RandomIntFromInterval(0, files.length-1)
+}
+
+function NextImage() {
+    if (files.length <= 1) {
+        return;
+    }
+
+    if(random.checked) {
+        RandomizeCursor()
+    } else {
+        if(i < files.length - 1) {
+            ++i;
+        } else {
+            i = 0;
+        }
+    }
+    LoadFile();
+}
+
+function PrevImage() {
+    if (files.length <= 1) {
+        return;
+    }
+
+    if(random.checked) {
+        RandomizeCursor()
+    } else {
+        if(i > 0) {
+            --i;
+        } else {
+            i = files.length - 1;
+        }
+    }
+    LoadFile();
+}
 
 function LoadFile() {
     if (files.length == 0) {
@@ -261,6 +253,14 @@ function Drag(dragX, dragY) {
     viewport.scrollTop -= dragY
 
     window.scroll(window.scrollX - dragX, window.scrollY - dragY)
+}
+
+function LoadFolder(directory) {
+    fs.readdirSync(directory).forEach(file => {
+        const absolute = path.join(directory, file);
+        if (fs.statSync(absolute).isDirectory()) return LoadFolder(absolute);
+        else return files.push(absolute);
+    });
 }
 
 function Main() {
