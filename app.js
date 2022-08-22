@@ -116,6 +116,68 @@ function PrevImage() {
     LoadFile();
 }
 
+videoExtensions = [
+    "3g2",
+    "3gp",
+    "a52",
+    "aac",
+    "asf",
+    "amv",
+    "au",
+    "avi",
+    "drc",
+    "dts",
+    "dv",
+    "dvr-ms",
+    "f4a",
+    "f4b",
+    "f4p",
+    "f4v",
+    "flv",
+    "gifv",
+    "m2ts",
+    "m2v",
+    "m4p",
+    "m4v",
+    "mka",
+    "mkv",
+    "mng",
+    "mov",
+    "mp4",
+    "mpe",
+    "mpeg",
+    "mpg",
+    "mpv",
+    "mts",
+    "mxf",
+    "nsc",
+    "nsv",
+    "nut",
+    "ogg",
+    "ogm",
+    "ogv",
+    "qt",
+    "ra",
+    "ram",
+    "rm",
+    "rmbv",
+    "roq",
+    "rv",
+    "svi",
+    "tac",
+    "ts",
+    "tta",
+    "tsv",
+    "ty",
+    "vid",
+    "viv",
+    "vob",
+    "webm",
+    "wmv",
+    "xa",
+    "yuv",
+]
+
 function LoadFile() {
     if (files.length == 0) {
         return;
@@ -126,8 +188,10 @@ function LoadFile() {
 
     header.innerText = f
 
+    ext = f.split('.').pop().toLowerCase();
+
     // video
-    if (f.endsWith('.mp4') || f.endsWith('.webm') || f.endsWith('.mkv') || f.endsWith('.avi')) {
+    if (videoExtensions.includes(ext)) {
         vid.src = path.resolve(f)
         vid.volume = 0
 
