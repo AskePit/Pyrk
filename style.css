@@ -12,10 +12,14 @@ body {
     align-items: center;
     width: calc(100vw - var(--scrollbar-width));
     height: calc(100vh - var(--scrollbar-height));
+    padding: 0;
 }
 
 img, video {
-    display: none;
+    position: absolute;
+    display: block;
+    max-width: none;
+    max-height: none;
 }
 
 p {

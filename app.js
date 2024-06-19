@@ -244,15 +244,60 @@ function Scale() {
         scale = MAX
     }
 
-    img.style.transform = "scale(" + scale + ")";
-    vid.style.transform = "scale(" + scale + ")";
+    img.style.width = "".concat((img.naturalWidth * scale), "px")
+    img.style.height = "".concat((img.naturalHeight * scale), "px")
+
+    vid.style.width = "".concat((vid.videoWidth * scale), "px")
+    vid.style.height = "".concat((vid.videoHeight * scale), "px")
+
+    Drag(0, 0) // imitate drag for a smart image centration
 }
 
 function Drag(dragX, dragY) {
-    viewport.scrollLeft -= dragX
-    viewport.scrollTop -= dragY
+    const PAD = 5
+    const windowWidth = viewport.clientWidth - PAD
+    const windowHeight = viewport.clientHeight - PAD
 
-    window.scroll(window.scrollX - dragX, window.scrollY - dragY)
+    for (let el of [img, vid]) {
+        // image
+        if (el.style.top == "") {
+            el.style.top = "0px"
+        }
+        if (el.style.left == "") {
+            el.style.left = "0px"
+        }
+
+        let elementWidth = parseInt(el.style.width)
+        let elementHeight = parseInt(el.style.height)
+
+        let newLeft = parseInt(el.style.left) + dragX
+        let newTop = parseInt(el.style.top) + dragY
+
+        if (elementWidth > windowWidth) {
+            if (newLeft > PAD) {
+                newLeft = PAD
+            }
+            if (newLeft < windowWidth - elementWidth) {
+                newLeft = windowWidth - elementWidth
+            }
+        } else {
+            newLeft = windowWidth/2 - elementWidth/2
+        }
+
+        if (elementHeight > windowHeight) {
+            if (newTop > PAD) {
+                newTop = PAD
+            }
+            if (newTop < windowHeight - elementHeight) {
+                newTop = windowHeight - elementHeight
+            }
+        } else {
+            newTop = windowHeight/2 - elementHeight/2
+        }
+
+        el.style.top = "".concat(newTop, "px")
+        el.style.left = "".concat(newLeft, "px")
+    }
 }
 
 function LoadFolder(directory) {
