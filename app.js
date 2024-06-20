@@ -66,6 +66,8 @@ videoExtensions = [
 
 let files  = [];
 var i = 0;
+let history = []; // [int]
+let historyCursor = -1
 var scale = 1;
 var waitForLoad = false;
 var drag = false;
@@ -130,8 +132,20 @@ function RandomIntFromInterval(min, max) { // min and max included
 	return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
-function RandomizeCursor() {
+function RandomizeCursorNoHistory() {
     i = RandomIntFromInterval(0, files.length-1)
+}
+
+function RandomizeCursorAppendHistory() {
+    RandomizeCursorNoHistory()
+    history.push(i)
+    historyCursor = history.length - 1
+}
+
+function RandomizeCursorPrependHistory() {
+    RandomizeCursorNoHistory()
+    history.splice(0, 0, i)
+    historyCursor = 0
 }
 
 function NextImage() {
@@ -140,7 +154,31 @@ function NextImage() {
     }
 
     if(random.checked) {
-        RandomizeCursor()
+        // has history
+        if (history.length > 0) {
+            // not entered history yet (not sure if it's possible here)
+            if (historyCursor == -1) {
+                historyCursor = 0;
+                i = history[historyCursor];
+            }
+            // we are already somwhere in the history
+            else if (historyCursor < history.length) {
+                ++historyCursor;
+                // history ended
+                if (historyCursor == history.length) {
+                    RandomizeCursorAppendHistory();
+                // history not ended
+                } else {
+                    i = history[historyCursor];
+                }
+            // currently not in the history
+            } else {
+                RandomizeCursorAppendHistory();
+            }
+        // no history at all
+        } else {
+            RandomizeCursorAppendHistory();
+        }
     } else {
         if(i < files.length - 1) {
             ++i;
@@ -157,7 +195,27 @@ function PrevImage() {
     }
 
     if(random.checked) {
-        RandomizeCursor()
+        // has history
+        if (history.length > 0) {
+            // not entered history yet
+            if (historyCursor == -1) {
+                historyCursor = history.length - 1;
+                i = history[historyCursor];
+            // we are already somwhere in the history
+            } else {
+                --historyCursor;
+                // history ended
+                if (historyCursor == -1) {
+                    RandomizeCursorPrependHistory();
+                // history not ended
+                } else {
+                    i = history[historyCursor];
+                }
+            }
+        // no history at all
+        } else {
+            RandomizeCursorPrependHistory();
+        }
     } else {
         if(i > 0) {
             --i;
@@ -324,13 +382,15 @@ function Main() {
         for(var idx = 0; idx<files.length; ++idx) {
             if(path.resolve(files[idx]) == path.resolve(filename)) {
                 i = idx
+                history.push(i)
+                historyCursor = 0
                 break
             }
         }
     } else if (stats.isDirectory) {
         LoadFolder(filename)
         if(random.checked) {
-            RandomizeCursor()
+            RandomizeCursorAppendHistory();
         }
     }
 
