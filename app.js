@@ -64,11 +64,24 @@ videoExtensions = [
     "yuv",
 ]
 
+const ContentType = {
+    Image: 'Image',
+    Video: 'Video',
+}
+
+const ScaleMode = {
+    Fit: 'Fit',
+    Origin: 'Origin',
+    Custom: 'Custom',
+}
+
 let files  = [];
 var i = 0;
-let history = []; // [int]
+let history = []; // [indexes of `files`]
 let historyCursor = -1
 var scale = 1;
+var currScaleMode = ScaleMode.Custom;
+var contentType = ContentType.Image;
 var waitForLoad = false;
 var drag = false;
 var prevDragX = -1;
@@ -85,7 +98,12 @@ vid.onloadedmetadata = () => OnContentLoad(vid)
 
 document.addEventListener('keydown', function(event) {
     if (event.which == 32 || event.which == 13) {
-        ScaleToOrig()
+        if (currScaleMode == ScaleMode.Fit) {
+            ScaleToOrig();
+        } else {
+            ScaleToFit();
+        }
+        
         return
     }
 
@@ -127,6 +145,20 @@ document.addEventListener('mousemove', event => {
     prevDragX = event.x
     prevDragY = event.y
 });
+
+function getActiveDiv() {
+    return contentType == ContentType.Image ? img : vid;
+}
+
+function getContentWidth() {
+    const el = getActiveDiv()
+    return el.naturalWidth == undefined ? el.videoWidth : el.naturalWidth
+}
+
+function getContentHeight() {
+    const el = getActiveDiv()
+    return el.naturalWidth == undefined ? el.videoHeight : el.naturalHeight
+}
 
 function RandomIntFromInterval(min, max) { // min and max included
 	return Math.floor(Math.random() * (max - min + 1) + min)
@@ -245,49 +277,57 @@ function LoadFile() {
         vid.src = path.resolve(f)
         vid.volume = 0
 
+        contentType = ContentType.Video
         img.style.display = 'none';
     // picture
     } else {
         img.src = path.resolve(f)
 
+        contentType = ContentType.Image
         vid.style.display = 'none';
         vid.pause();
         vid.currentTime = 0;
     }
     waitForLoad = true;
-    console.log(random.checked)
 }
 
 function OnContentLoad(el) {
     if(!waitForLoad) return
     waitForLoad = false
 
-    const PAD = 75
-    windowWidth = viewport.clientWidth - PAD
-    windowHeight = viewport.clientHeight - PAD
-    elWidth = (el.naturalWidth == undefined ? el.videoWidth : el.naturalWidth)
-    elHeight = (el.naturalHeight == undefined ? el.videoHeight : el.naturalHeight)
-
-    if (elWidth > windowWidth || elHeight > windowHeight) {
-        let wScale = windowWidth / elWidth
-        let hScale = windowHeight / elHeight
-
-        scale = Math.min(wScale, hScale)
-        Scale()
-    } else {
-        ScaleToOrig()
-    }
+    ScaleToFit();
 
     el.style.display = 'block'; // finally show element
 }
 
 function ScaleToOrig() {
     scale = 1
+    currScaleMode = ScaleMode.Origin
     Scale()
+}
+
+function ScaleToFit() {
+    const PAD = 75
+    windowWidth = viewport.clientWidth - PAD
+    windowHeight = viewport.clientHeight - PAD
+    elWidth = getContentWidth()
+    elHeight = getContentHeight()
+
+    if (elWidth > windowWidth || elHeight > windowHeight) {
+        let wScale = windowWidth / elWidth
+        let hScale = windowHeight / elHeight
+
+        scale = Math.min(wScale, hScale)
+        currScaleMode = ScaleMode.Fit
+        Scale()
+    } else {
+        ScaleToOrig()
+    }
 }
 
 function ScaleTo(delta, x, y) {
     scale += 0.2*delta*scale
+    currScaleMode = ScaleMode.Custom
     Scale()
 }
 
@@ -302,11 +342,10 @@ function Scale() {
         scale = MAX
     }
 
-    img.style.width = "".concat((img.naturalWidth * scale), "px")
-    img.style.height = "".concat((img.naturalHeight * scale), "px")
+    const el = getActiveDiv();
 
-    vid.style.width = "".concat((vid.videoWidth * scale), "px")
-    vid.style.height = "".concat((vid.videoHeight * scale), "px")
+    el.style.width = "".concat(getContentWidth() * scale, "px")
+    el.style.height = "".concat(getContentHeight() * scale, "px")
 
     Drag(0, 0) // imitate drag for a smart image centration
 }
@@ -316,46 +355,45 @@ function Drag(dragX, dragY) {
     const windowWidth = viewport.clientWidth - PAD
     const windowHeight = viewport.clientHeight - PAD
 
-    for (let el of [img, vid]) {
-        // image
-        if (el.style.top == "") {
-            el.style.top = "0px"
-        }
-        if (el.style.left == "") {
-            el.style.left = "0px"
-        }
+    const el = getActiveDiv();
 
-        let elementWidth = parseInt(el.style.width)
-        let elementHeight = parseInt(el.style.height)
-
-        let newLeft = parseInt(el.style.left) + dragX
-        let newTop = parseInt(el.style.top) + dragY
-
-        if (elementWidth > windowWidth) {
-            if (newLeft > PAD) {
-                newLeft = PAD
-            }
-            if (newLeft < windowWidth - elementWidth) {
-                newLeft = windowWidth - elementWidth
-            }
-        } else {
-            newLeft = windowWidth/2 - elementWidth/2
-        }
-
-        if (elementHeight > windowHeight) {
-            if (newTop > PAD) {
-                newTop = PAD
-            }
-            if (newTop < windowHeight - elementHeight) {
-                newTop = windowHeight - elementHeight
-            }
-        } else {
-            newTop = windowHeight/2 - elementHeight/2
-        }
-
-        el.style.top = "".concat(newTop, "px")
-        el.style.left = "".concat(newLeft, "px")
+    if (el.style.top == "") {
+        el.style.top = "0px"
     }
+    if (el.style.left == "") {
+        el.style.left = "0px"
+    }
+
+    let elementWidth = parseInt(el.style.width)
+    let elementHeight = parseInt(el.style.height)
+
+    let newLeft = parseInt(el.style.left) + dragX
+    let newTop = parseInt(el.style.top) + dragY
+
+    if (elementWidth > windowWidth) {
+        if (newLeft > PAD) {
+            newLeft = PAD
+        }
+        if (newLeft < windowWidth - elementWidth) {
+            newLeft = windowWidth - elementWidth
+        }
+    } else {
+        newLeft = windowWidth/2 - elementWidth/2
+    }
+
+    if (elementHeight > windowHeight) {
+        if (newTop > PAD) {
+            newTop = PAD
+        }
+        if (newTop < windowHeight - elementHeight) {
+            newTop = windowHeight - elementHeight
+        }
+    } else {
+        newTop = windowHeight/2 - elementHeight/2
+    }
+
+    el.style.top = "".concat(newTop, "px")
+    el.style.left = "".concat(newLeft, "px")
 }
 
 function LoadFolder(directory) {
