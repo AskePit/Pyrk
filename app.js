@@ -67,6 +67,7 @@ videoExtensions = [
 const ContentType = {
     Image: 'Image',
     Video: 'Video',
+    NoContent: 'NoContent'
 }
 
 const ScaleMode = {
@@ -81,7 +82,7 @@ let history = []; // [indexes of `files`]
 let historyCursor = -1
 var scale = 1;
 var currScaleMode = ScaleMode.Custom;
-var contentType = ContentType.Image;
+var contentType = ContentType.NoContent;
 var waitForLoad = false;
 var drag = false;
 var prevDragX = -1;
@@ -91,10 +92,14 @@ var header = document.getElementsByTagName('p')[0]
 var viewport = document.getElementById('view')
 var img = viewport.getElementsByTagName('img')[0]
 var vid = viewport.getElementsByTagName('video')[0]
+var noContentDiv = document.getElementById('no-content')
 var random = document.getElementsByTagName('input')[0]
 
 img.onload = () => OnContentLoad(img)
 vid.onloadedmetadata = () => OnContentLoad(vid)
+
+img.onerror = () => OnContentLoadFail(img)
+vid.onerror = () => OnContentLoadFail(vid)
 
 document.addEventListener('keydown', function(event) {
     if (event.which == 32 || event.which == 13) {
@@ -147,7 +152,11 @@ document.addEventListener('mousemove', event => {
 });
 
 function getActiveDiv() {
-    return contentType == ContentType.Image ? img : vid;
+    return contentType == ContentType.Image
+        ? img
+        : contentType == ContentType.Video
+            ? vid
+            : noContentDiv;
 }
 
 function getContentWidth() {
@@ -278,15 +287,19 @@ function LoadFile() {
         vid.volume = 0
 
         contentType = ContentType.Video
+        noContentDiv.style.display = 'none';
         img.style.display = 'none';
+        img.src = ""
     // picture
     } else {
         img.src = path.resolve(f)
 
         contentType = ContentType.Image
+        noContentDiv.style.display = 'none';
         vid.style.display = 'none';
         vid.pause();
         vid.currentTime = 0;
+        vid.src = ""
     }
     waitForLoad = true;
 }
@@ -300,13 +313,47 @@ function OnContentLoad(el) {
     el.style.display = 'block'; // finally show element
 }
 
+function OnContentLoadFail(el) {
+    if (contentType == ContentType.NoContent) {
+        return;
+    }
+
+    if (contentType == ContentType.Video && el === img) {
+        return;
+    }
+
+    if (contentType == ContentType.Image && el === vid) {
+        return;
+    }
+
+    console.log('azazazazazaz', el)
+    contentType = ContentType.NoContent;
+
+    img.style.display = 'none';
+    vid.style.display = 'none';
+    noContentDiv.style.display = 'block';
+
+    vid.pause();
+    vid.currentTime = 0;
+    vid.src = ""
+    img.src = ""
+}
+
 function ScaleToOrig() {
+    if (contentType == ContentType.NoContent) {
+        return;
+    }
+
     scale = 1
     currScaleMode = ScaleMode.Origin
     Scale()
 }
 
 function ScaleToFit() {
+    if (contentType == ContentType.NoContent) {
+        return;
+    }
+
     const PAD = 75
     windowWidth = viewport.clientWidth - PAD
     windowHeight = viewport.clientHeight - PAD
@@ -326,12 +373,20 @@ function ScaleToFit() {
 }
 
 function ScaleTo(delta, x, y) {
+    if (contentType == ContentType.NoContent) {
+        return;
+    }
+
     scale += 0.2*delta*scale
     currScaleMode = ScaleMode.Custom
     Scale()
 }
 
 function Scale() {
+    if (contentType == ContentType.NoContent) {
+        return;
+    }
+
     const MIN = 0.01
     const MAX = 7
 
@@ -351,6 +406,10 @@ function Scale() {
 }
 
 function Drag(dragX, dragY) {
+    if (contentType == ContentType.NoContent) {
+        return;
+    }
+
     const PAD = 5
     const windowWidth = viewport.clientWidth - PAD
     const windowHeight = viewport.clientHeight - PAD
