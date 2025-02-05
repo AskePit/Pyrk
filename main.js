@@ -1,5 +1,4 @@
 const { app, BrowserWindow, globalShortcut } = require('electron')
-const path = require('path')
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -7,11 +6,9 @@ const createWindow = () => {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            preload: path.join(__dirname, 'preload.js'),
         },
         autoHideMenuBar: true
     });
-    //win.setMenu(null)
 
     win.loadFile('index.html', {query: {"argv": JSON.stringify(process.argv)}})
 };
@@ -31,7 +28,7 @@ app.whenReady().then(() => {
     })
     
     if (!ret) {
-        console.log('ошибка регистрации')
+        console.log('registration error')
     }
 });
 
@@ -42,9 +39,7 @@ app.on('window-all-closed', () => {
 });
   
 app.on('will-quit', () => {
-    // Отменяем регистрацию сочетания клавиш.
+    // Reject shortcuts registration
     globalShortcut.unregister('Esc')
-
-    // Отменяем регистрацию всех сочетаний.
     globalShortcut.unregisterAll()
 })

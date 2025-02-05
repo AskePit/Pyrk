@@ -1,1 +1,0 @@
-window.mahArg = process.kuku

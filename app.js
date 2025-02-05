@@ -1,8 +1,8 @@
-const path = require("path");
-const fs = require("fs");
-const querystring = require('querystring');
+const path = require("path")
+const fs = require("fs")
+const querystring = require('querystring')
 
-videoExtensions = [
+const videoExtensions = [
     "3g2",
     "3gp",
     "a52",
@@ -76,24 +76,24 @@ const ScaleMode = {
     Custom: 'Custom',
 }
 
-let files  = [];
-var i = 0;
-let history = []; // [indexes of `files`]
+let files  = []
+let i = 0
+let history = [] // [indexes of `files`]
 let historyCursor = -1
-var scale = 1;
-var currScaleMode = ScaleMode.Custom;
-var contentType = ContentType.NoContent;
-var waitForLoad = false;
-var drag = false;
-var prevDragX = -1;
-var prevDragY = -1;
+let scale = 1
+let currScaleMode = ScaleMode.Custom
+let contentType = ContentType.NoContent
+let waitForLoad = false
+let drag = false
+let prevDragX = -1
+let prevDragY = -1
 
-var header = document.getElementsByTagName('p')[0]
-var viewport = document.getElementById('view')
-var img = viewport.getElementsByTagName('img')[0]
-var vid = viewport.getElementsByTagName('video')[0]
-var noContentDiv = document.getElementById('no-content')
-var random = document.getElementsByTagName('input')[0]
+let header = document.getElementsByTagName('p')[0]
+let viewport = document.getElementById('view')
+let img = viewport.getElementsByTagName('img')[0]
+let vid = viewport.getElementsByTagName('video')[0]
+let noContentDiv = document.getElementById('no-content')
+let random = document.getElementsByTagName('input')[0]
 
 img.onload = () => OnContentLoad(img)
 vid.onloadedmetadata = () => OnContentLoad(vid)
@@ -104,15 +104,15 @@ vid.onerror = () => OnContentLoadFail(vid)
 document.addEventListener('keydown', function(event) {
     if (event.which == 32 || event.which == 13) {
         if (currScaleMode == ScaleMode.Fit) {
-            ScaleToOrig();
+            ScaleToOrig()
         } else {
-            ScaleToFit();
+            ScaleToFit()
         }
         
         return
     }
 
-    const key = event.key; // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"
+    const key = event.key // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"
 
     const callback = {
         "ArrowLeft"  : PrevImage,
@@ -121,22 +121,22 @@ document.addEventListener('keydown', function(event) {
         "ArrowDown"  : NextImage,
     }[key]
     callback?.()
-});
+})
 
 document.addEventListener('wheel', event => {
     ScaleTo(-Math.sign(event.deltaY), event.x, event.y)
-});
+})
 
 document.addEventListener('mousedown', event => {
-    drag = true;
+    drag = true
     event.preventDefault()
-});
+})
 
 document.addEventListener('mouseup', event => {
-    drag = false;
-    prevDragX = -1;
-    prevDragY = -1;
-});
+    drag = false
+    prevDragX = -1
+    prevDragY = -1
+})
 
 document.addEventListener('mousemove', event => {
     if (!drag) {
@@ -144,19 +144,19 @@ document.addEventListener('mousemove', event => {
     }
 
     if (prevDragX >= 0 && prevDragY >= 0) {
-        Drag(event.x - prevDragX, event.y - prevDragY);
+        Drag(event.x - prevDragX, event.y - prevDragY)
     }
 
     prevDragX = event.x
     prevDragY = event.y
-});
+})
 
 function getActiveDiv() {
     return contentType == ContentType.Image
         ? img
         : contentType == ContentType.Video
             ? vid
-            : noContentDiv;
+            : noContentDiv
 }
 
 function getContentWidth() {
@@ -191,7 +191,7 @@ function RandomizeCursorPrependHistory() {
 
 function NextImage() {
     if (files.length <= 1) {
-        return;
+        return
     }
 
     if(random.checked) {
@@ -199,40 +199,40 @@ function NextImage() {
         if (history.length > 0) {
             // not entered history yet (not sure if it's possible here)
             if (historyCursor == -1) {
-                historyCursor = 0;
-                i = history[historyCursor];
+                historyCursor = 0
+                i = history[historyCursor]
             }
             // we are already somwhere in the history
             else if (historyCursor < history.length) {
-                ++historyCursor;
+                ++historyCursor
                 // history ended
                 if (historyCursor == history.length) {
-                    RandomizeCursorAppendHistory();
+                    RandomizeCursorAppendHistory()
                 // history not ended
                 } else {
-                    i = history[historyCursor];
+                    i = history[historyCursor]
                 }
             // currently not in the history
             } else {
-                RandomizeCursorAppendHistory();
+                RandomizeCursorAppendHistory()
             }
         // no history at all
         } else {
-            RandomizeCursorAppendHistory();
+            RandomizeCursorAppendHistory()
         }
     } else {
         if(i < files.length - 1) {
-            ++i;
+            ++i
         } else {
-            i = 0;
+            i = 0
         }
     }
-    LoadFile();
+    LoadFile()
 }
 
 function PrevImage() {
     if (files.length <= 1) {
-        return;
+        return
     }
 
     if(random.checked) {
@@ -240,43 +240,43 @@ function PrevImage() {
         if (history.length > 0) {
             // not entered history yet
             if (historyCursor == -1) {
-                historyCursor = history.length - 1;
-                i = history[historyCursor];
+                historyCursor = history.length - 1
+                i = history[historyCursor]
             // we are already somwhere in the history
             } else {
-                --historyCursor;
+                --historyCursor
                 // history ended
                 if (historyCursor == -1) {
-                    RandomizeCursorPrependHistory();
+                    RandomizeCursorPrependHistory()
                 // history not ended
                 } else {
-                    i = history[historyCursor];
+                    i = history[historyCursor]
                 }
             }
         // no history at all
         } else {
-            RandomizeCursorPrependHistory();
+            RandomizeCursorPrependHistory()
         }
     } else {
         if(i > 0) {
-            --i;
+            --i
         } else {
-            i = files.length - 1;
+            i = files.length - 1
         }
     }
-    LoadFile();
+    LoadFile()
 }
 
 function LoadFile() {
     if (files.length == 0) {
-        return;
+        return
     }
 
     let f = files[i]
 
     header.innerText = f
 
-    ext = f.split('.').pop().toLowerCase();
+    ext = f.split('.').pop().toLowerCase()
 
     // NOTE: this function only hides unneded <div>
     // desired <div> is shown only in `OnContentLoad` fucntion
@@ -287,61 +287,61 @@ function LoadFile() {
         vid.volume = 0
 
         contentType = ContentType.Video
-        noContentDiv.style.display = 'none';
-        img.style.display = 'none';
+        noContentDiv.style.display = 'none'
+        img.style.display = 'none'
         img.src = ""
     // picture
     } else {
         img.src = path.resolve(f)
 
         contentType = ContentType.Image
-        noContentDiv.style.display = 'none';
-        vid.style.display = 'none';
-        vid.pause();
-        vid.currentTime = 0;
+        noContentDiv.style.display = 'none'
+        vid.style.display = 'none'
+        vid.pause()
+        vid.currentTime = 0
         vid.src = ""
     }
-    waitForLoad = true;
+    waitForLoad = true
 }
 
 function OnContentLoad(el) {
     if(!waitForLoad) return
     waitForLoad = false
 
-    ScaleToFit();
+    ScaleToFit()
 
-    el.style.display = 'block'; // finally show element
+    el.style.display = 'block' // finally show element
 }
 
 function OnContentLoadFail(el) {
     if (contentType == ContentType.NoContent) {
-        return;
+        return
     }
 
     if (contentType == ContentType.Video && el === img) {
-        return;
+        return
     }
 
     if (contentType == ContentType.Image && el === vid) {
-        return;
+        return
     }
 
     console.log('azazazazazaz', el)
-    contentType = ContentType.NoContent;
+    contentType = ContentType.NoContent
 
-    img.style.display = 'none';
-    vid.style.display = 'none';
-    noContentDiv.style.display = 'block';
+    img.style.display = 'none'
+    vid.style.display = 'none'
+    noContentDiv.style.display = 'block'
 
-    vid.pause();
-    vid.currentTime = 0;
+    vid.pause()
+    vid.currentTime = 0
     vid.src = ""
     img.src = ""
 }
 
 function ScaleToOrig() {
     if (contentType == ContentType.NoContent) {
-        return;
+        return
     }
 
     scale = 1
@@ -351,7 +351,7 @@ function ScaleToOrig() {
 
 function ScaleToFit() {
     if (contentType == ContentType.NoContent) {
-        return;
+        return
     }
 
     const PAD = 75
@@ -374,7 +374,7 @@ function ScaleToFit() {
 
 function ScaleTo(delta, x, y) {
     if (contentType == ContentType.NoContent) {
-        return;
+        return
     }
 
     scale += 0.2*delta*scale
@@ -384,7 +384,7 @@ function ScaleTo(delta, x, y) {
 
 function Scale() {
     if (contentType == ContentType.NoContent) {
-        return;
+        return
     }
 
     const MIN = 0.01
@@ -397,7 +397,7 @@ function Scale() {
         scale = MAX
     }
 
-    const el = getActiveDiv();
+    const el = getActiveDiv()
 
     el.style.width = "".concat(getContentWidth() * scale, "px")
     el.style.height = "".concat(getContentHeight() * scale, "px")
@@ -407,14 +407,14 @@ function Scale() {
 
 function Drag(dragX, dragY) {
     if (contentType == ContentType.NoContent) {
-        return;
+        return
     }
 
     const PAD = 5
     const windowWidth = viewport.clientWidth - PAD
     const windowHeight = viewport.clientHeight - PAD
 
-    const el = getActiveDiv();
+    const el = getActiveDiv()
 
     if (el.style.top == "") {
         el.style.top = "0px"
@@ -457,18 +457,18 @@ function Drag(dragX, dragY) {
 
 function LoadFolder(directory) {
     fs.readdirSync(directory).forEach(file => {
-        const absolute = path.join(directory, file);
-        if (fs.statSync(absolute).isDirectory()) return LoadFolder(absolute);
-        else return files.push(absolute);
-    });
+        const absolute = path.join(directory, file)
+        if (fs.statSync(absolute).isDirectory()) return LoadFolder(absolute)
+        else return files.push(absolute)
+    })
 }
 
 function Main() {
-    let query = querystring.parse(global.location.search);
+    let query = querystring.parse(global.location.search)
     let args = JSON.parse(query['?argv'])
 
     if (args.length <= 1) {
-        return;
+        return
     }
 
     let filename = args[1]
@@ -476,7 +476,7 @@ function Main() {
     if (stats.isFile()) {
         LoadFolder(path.dirname(filename))
 
-        for(var idx = 0; idx<files.length; ++idx) {
+        for(let idx = 0; idx<files.length; ++idx) {
             if(path.resolve(files[idx]) == path.resolve(filename)) {
                 i = idx
                 history.push(i)
@@ -487,10 +487,10 @@ function Main() {
     } else if (stats.isDirectory) {
         LoadFolder(filename)
         if(random.checked) {
-            RandomizeCursorAppendHistory();
+            RandomizeCursorAppendHistory()
         }
     }
 
     LoadFile()
 }
-Main();
+Main()
