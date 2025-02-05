@@ -88,12 +88,12 @@ let drag = false
 let prevDragX = -1
 let prevDragY = -1
 
-let header = document.getElementsByTagName('p')[0]
-let viewport = document.getElementById('view')
-let img = viewport.getElementsByTagName('img')[0]
-let vid = viewport.getElementsByTagName('video')[0]
-let noContentDiv = document.getElementById('no-content')
-let random = document.getElementsByTagName('input')[0]
+const header = document.getElementsByTagName('p')[0]
+const viewport = document.getElementById('view')
+const img = viewport.getElementsByTagName('img')[0]
+const vid = viewport.getElementsByTagName('video')[0]
+const noContentDiv = document.getElementById('no-content')
+const random = document.getElementsByTagName('input')[0]
 
 img.onload = () => OnContentLoad(img)
 vid.onloadedmetadata = () => OnContentLoad(vid)
@@ -326,7 +326,6 @@ function OnContentLoadFail(el) {
         return
     }
 
-    console.log('azazazazazaz', el)
     contentType = ContentType.NoContent
 
     img.style.display = 'none'
@@ -399,8 +398,8 @@ function Scale() {
 
     const el = getActiveDiv()
 
-    el.style.width = "".concat(getContentWidth() * scale, "px")
-    el.style.height = "".concat(getContentHeight() * scale, "px")
+    el.style.width = `${getContentWidth() * scale}px`
+    el.style.height = `${getContentHeight() * scale}px`
 
     Drag(0, 0) // imitate drag for a smart image centration
 }
@@ -451,8 +450,8 @@ function Drag(dragX, dragY) {
         newTop = windowHeight/2 - elementHeight/2
     }
 
-    el.style.top = "".concat(newTop, "px")
-    el.style.left = "".concat(newLeft, "px")
+    el.style.top = `${newTop}px`
+    el.style.left = `${newLeft}px`
 }
 
 function LoadFolder(directory) {
