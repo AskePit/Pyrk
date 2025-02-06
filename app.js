@@ -151,7 +151,7 @@ document.addEventListener('mousemove', event => {
     prevDragY = event.y
 })
 
-function getActiveDiv() {
+function GetActiveDiv() {
     return contentType == ContentType.Image
         ? img
         : contentType == ContentType.Video
@@ -159,13 +159,13 @@ function getActiveDiv() {
             : noContentDiv
 }
 
-function getContentWidth() {
-    const el = getActiveDiv()
+function GetContentWidth() {
+    const el = GetActiveDiv()
     return el.naturalWidth == undefined ? el.videoWidth : el.naturalWidth
 }
 
-function getContentHeight() {
-    const el = getActiveDiv()
+function GetContentHeight() {
+    const el = GetActiveDiv()
     return el.naturalWidth == undefined ? el.videoHeight : el.naturalHeight
 }
 
@@ -276,7 +276,7 @@ function LoadFile() {
 
     header.innerText = f
 
-    ext = f.split('.').pop().toLowerCase()
+    const ext = f.split('.').pop().toLowerCase()
 
     // NOTE: this function only hides unneded <div>
     // desired <div> is shown only in `OnContentLoad` fucntion
@@ -346,6 +346,21 @@ function ScaleToOrig() {
     scale = 1
     currScaleMode = ScaleMode.Origin
     Scale()
+
+    const PAD = 5
+    const windowWidth = viewport.clientWidth - PAD
+    const windowHeight = viewport.clientHeight - PAD
+    const el = GetActiveDiv()
+    const elementWidth = parseInt(el.style.width)
+    const elementHeight = parseInt(el.style.height)
+
+    const newLeft = windowWidth/2 - elementWidth/2
+    const newTop = windowHeight/2 - elementHeight/2
+
+    SetImageDragLeft(newLeft)
+    SetImageDragTop(newTop)
+
+    Drag(0, 0) // imitate drag for a smart image centration
 }
 
 function ScaleToFit() {
@@ -354,10 +369,10 @@ function ScaleToFit() {
     }
 
     const PAD = 75
-    windowWidth = viewport.clientWidth - PAD
-    windowHeight = viewport.clientHeight - PAD
-    elWidth = getContentWidth()
-    elHeight = getContentHeight()
+    const windowWidth = viewport.clientWidth - PAD
+    const windowHeight = viewport.clientHeight - PAD
+    const elWidth = GetContentWidth()
+    const elHeight = GetContentHeight()
 
     if (elWidth > windowWidth || elHeight > windowHeight) {
         let wScale = windowWidth / elWidth
@@ -376,9 +391,31 @@ function ScaleTo(delta, x, y) {
         return
     }
 
+    const el = GetActiveDiv()
+
+    let elementWidth = parseInt(el.style.width)
+    let elementHeight = parseInt(el.style.height)
+
+    let imageX = x - GetImageDragLeft()
+    let imageY = y - GetImageDragTop()
+    const imageU = imageX/elementWidth
+    const imageV = imageY/elementHeight
+
     scale += 0.2*delta*scale
     currScaleMode = ScaleMode.Custom
     Scale()
+
+    // yep, recalc again
+    elementWidth = parseInt(el.style.width)
+    elementHeight = parseInt(el.style.height)
+
+    imageX = imageU * elementWidth
+    imageY = imageV * elementHeight
+
+    SetImageDragLeft(x - imageX)
+    SetImageDragTop(y - imageY)
+
+    Drag(0, 0) // imitate drag for a smart image centration
 }
 
 function Scale() {
@@ -396,12 +433,42 @@ function Scale() {
         scale = MAX
     }
 
-    const el = getActiveDiv()
+    const el = GetActiveDiv()
 
-    el.style.width = `${getContentWidth() * scale}px`
-    el.style.height = `${getContentHeight() * scale}px`
+    el.style.width = `${GetContentWidth() * scale}px`
+    el.style.height = `${GetContentHeight() * scale}px`
 
     Drag(0, 0) // imitate drag for a smart image centration
+}
+
+function GetImageDragTop() {
+    const el = GetActiveDiv()
+
+    if (el.style.top == "") {
+        el.style.top = "0px"
+    }
+
+    return parseInt(el.style.top)
+}
+
+function GetImageDragLeft() {
+    const el = GetActiveDiv()
+
+    if (el.style.left == "") {
+        el.style.left = "0px"
+    }
+
+    return parseInt(el.style.left)
+}
+
+function SetImageDragTop(top) {
+    const el = GetActiveDiv()
+    el.style.top = `${top}px`
+}
+
+function SetImageDragLeft(left) {
+    const el = GetActiveDiv()
+    el.style.left = `${left}px`
 }
 
 function Drag(dragX, dragY) {
@@ -413,20 +480,13 @@ function Drag(dragX, dragY) {
     const windowWidth = viewport.clientWidth - PAD
     const windowHeight = viewport.clientHeight - PAD
 
-    const el = getActiveDiv()
-
-    if (el.style.top == "") {
-        el.style.top = "0px"
-    }
-    if (el.style.left == "") {
-        el.style.left = "0px"
-    }
+    const el = GetActiveDiv()
 
     let elementWidth = parseInt(el.style.width)
     let elementHeight = parseInt(el.style.height)
 
-    let newLeft = parseInt(el.style.left) + dragX
-    let newTop = parseInt(el.style.top) + dragY
+    let newLeft = GetImageDragLeft() + dragX
+    let newTop = GetImageDragTop() + dragY
 
     if (elementWidth > windowWidth) {
         if (newLeft > PAD) {
@@ -450,8 +510,8 @@ function Drag(dragX, dragY) {
         newTop = windowHeight/2 - elementHeight/2
     }
 
-    el.style.top = `${newTop}px`
-    el.style.left = `${newLeft}px`
+    SetImageDragTop(newTop)
+    SetImageDragLeft(newLeft)
 }
 
 function LoadFolder(directory) {
