@@ -103,7 +103,7 @@ class RandomPool {
             this.pool.push(i)
         }
 
-        shuffle(this.pool)
+        this.#shuffle(this.pool)
     }
 
     #refill() {
