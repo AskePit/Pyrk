@@ -76,8 +76,58 @@ const ScaleMode = {
     Custom: 'Custom',
 }
 
+class RandomPool {
+    size = 0
+    pool = []
+
+    #shuffle(array) {
+        let currentIndex = array.length;
+      
+        // While there remain elements to shuffle...
+        while (currentIndex != 0) {
+      
+          // Pick a remaining element...
+          let randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+      
+          // And swap it with the current element.
+          [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+        }
+    }
+
+    constructor(size) {
+        this.size = size
+        this.pool = []
+        for(let i = 0; i<size; ++i) {
+            this.pool.push(i)
+        }
+
+        shuffle(this.pool)
+    }
+
+    #refill() {
+        this.pool = []
+        for(let i = 0; i<this.size; ++i) {
+            this.pool.push(i)
+        }
+
+        this.#shuffle(this.pool)
+    }
+
+    yield() {
+        if (this.pool.length == 0) {
+            this.#refill()
+        }
+        let y = this.pool[this.pool.length-1]
+        this.pool.length -= 1
+        return y
+    }
+}
+
 let files  = []
 let i = 0
+let iPool = null // RandomPool
 let history = [] // [indexes of `files`]
 let historyCursor = -1
 let scale = 1
@@ -169,12 +219,8 @@ function GetContentHeight() {
     return el.naturalWidth == undefined ? el.videoHeight : el.naturalHeight
 }
 
-function RandomIntFromInterval(min, max) { // min and max included
-	return Math.floor(Math.random() * (max - min + 1) + min)
-}
-
 function RandomizeCursorNoHistory() {
-    i = RandomIntFromInterval(0, files.length-1)
+    i = iPool.yield()
 }
 
 function RandomizeCursorAppendHistory() {
@@ -520,6 +566,8 @@ function LoadFolder(directory) {
         if (fs.statSync(absolute).isDirectory()) return LoadFolder(absolute)
         else return files.push(absolute)
     })
+
+    iPool = new RandomPool(files.length)
 }
 
 function Main() {
